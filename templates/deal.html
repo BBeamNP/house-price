@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NY Housing AI</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f3f4f6;
+padding:40px;
+}
+
+.container{
+width:500px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:8px;
+margin-bottom:10px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#0066CC;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+background:#004999;
+}
+
+.result{
+margin-top:20px;
+padding:15px;
+background:#eef2ff;
+border-radius:8px;
+font-size:18px;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🏠 AI Housing Price Prediction</h2>
+
+<label>Beds</label>
+<input id="beds" type="number">
+
+<label>Bath</label>
+<input id="bath" type="number">
+
+<label>Square Feet</label>
+<input id="sqft" type="number">
+
+<label>Latitude</label>
+<input id="lat" type="number" step="any">
+
+<label>Longitude</label>
+<input id="lon" type="number" step="any">
+
+<label>Property Type</label>
+<select id="type">
+<option>House for sale</option>
+<option>Condo for sale</option>
+<option>Townhouse for sale</option>
+<option>Multi-family home for sale</option>
+<option>Co-op for sale</option>
+</select>
+
+<label>Location</label>
+<select id="area">
+<option>Manhattan</option>
+<option>Brooklyn</option>
+<option>Queens</option>
+<option>Bronx</option>
+<option>Staten Island</option>
+</select>
+
+<button onclick="predictPrice()">Predict Price</button>
+
+<div class="result" id="result">
+Estimated Price will appear here
+</div>
+
+</div>
+
+<script>
+async function predictPrice(){
+
+let beds = document.getElementById("beds").value
+let bath = document.getElementById("bath").value
+let sqft = document.getElementById("sqft").value
+let lat = document.getElementById("lat").value
+let lon = document.getElementById("lon").value
+let property_type = document.getElementById("type").value
+let sublocality = document.getElementById("area").value
+
+let url = `http://127.0.0.1:8000/deal?beds=${beds}&bath=${bath}&sqft=${sqft}&lat=${lat}&lon=${lon}&property_type=${property_type}&sublocality=${sublocality}`
+
+let response = await fetch(url,{
+method:"POST"
+})
+
+let data = await response.json()
+
+let price = data.deal_prediction
+
+document.getElementById("result").innerHTML =
+"💰 Estimated Price: $" + Number(price).toLocaleString()
+
+}
+</script>
+
+</body>
+</html>
