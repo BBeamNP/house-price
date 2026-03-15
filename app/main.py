@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from app.api import deal, roi, goldmine
-
+from fastapi.staticfiles import StaticFiles
 app = FastAPI(title="NY Housing ML API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 templates = Jinja2Templates(directory="templates")
 
@@ -14,3 +16,9 @@ app.include_router(goldmine.router)
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("deal.html", {"request": request})
+
+
+# หน้า Goldmine Map
+@app.get("/goldmine")
+def goldmine_map(request: Request):
+    return templates.TemplateResponse("goldmine.html", {"request": request})

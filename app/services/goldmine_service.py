@@ -1,20 +1,21 @@
 import joblib
 import numpy as np
+from pathlib import Path
 
-model = None
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-def load_model():
-    global model
-    try:
-        model = joblib.load("app/ml_models/goal_minemap_model.pkl")
-    except:
-        model = None
+model = joblib.load(BASE_DIR / "ml_models" / "goal_minemap_model.pkl")
+scaler = joblib.load(BASE_DIR / "ml_models" / "goal_minemap_scaler.pkl")
 
-load_model()
 
 def predict_cluster(price_sqft, connectivity):
-    if model is None:
-        return ["model_not_loaded"]
-    features = np.array([[price_sqft, connectivity]])
-    cluster = model.predict(features)
-    return cluster.tolist()
+
+    X = np.array([[price_sqft, connectivity]])
+
+    X_scaled = scaler.transform(X)
+
+    distances, indices = model.kneighbors(X_scaled)
+
+    cluster = int(indices[0][0])
+
+    return cluster
