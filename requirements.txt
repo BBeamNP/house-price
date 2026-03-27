@@ -7,4 +7,4 @@ psycopg2-binary
 joblib
 pydantic
 seaborn
-sklearn
+jinja2
