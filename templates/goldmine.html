@@ -8,13 +8,75 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
 <style>
 
+body{ margin:0; font-family:Arial; }
+
+nav{
+background:#0f172a;
+padding:0 32px;
+display:flex;
+align-items:center;
+gap:0;
+height:52px;
+border-bottom:1px solid #1e293b;
+}
+
+nav .brand{
+color:white;
+font-size:15px;
+font-weight:700;
+letter-spacing:0.04em;
+margin-right:32px;
+padding-right:32px;
+border-right:1px solid #334155;
+white-space:nowrap;
+}
+
+nav a{
+color:#94a3b8;
+text-decoration:none;
+font-size:14px;
+font-weight:500;
+padding:0 16px;
+height:52px;
+display:flex;
+align-items:center;
+border-bottom:2px solid transparent;
+transition:color 0.15s, border-color 0.15s;
+}
+
+nav a:hover{
+color:white;
+}
+
+nav a.active{
+color:white;
+border-bottom:2px solid #3b82f6;
+}
+
 #map{
-height:750px;
+height:calc(100vh - 52px);
 width:100%;
+}
+
+.legend{
+background:white;
+padding:12px 16px;
+border-radius:8px;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+font-family:Arial;
+font-size:13px;
+line-height:2;
+}
+
+.legend-dot{
+display:inline-block;
+width:12px;
+height:12px;
+border-radius:50%;
+margin-right:7px;
+vertical-align:middle;
 }
 
 </style>
@@ -23,142 +85,137 @@ width:100%;
 
 <body>
 
-<h1>NYC House Price Map</h1>
+<nav>
+  <span class="brand">NY Housing AI</span>
+  <a href="/">Deal Hunter</a>
+  <a href="/matchmaker">Matchmaker</a>
+  <a href="/goldmine" class="active">Gold Mine Map</a>
+</nav>
 
 <div id="map"></div>
 
 <script>
 
-var map = L.map('map').setView([40.7128,-74.0060],10)
+var map = L.map('map').setView([40.7128,-74.0060],11)
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
+maxZoom:19,
+opacity:0.6
 }).addTo(map)
 
+/* =======================
+   CLUSTER COLORS
+======================= */
+
+var clusterColors = {
+  'Gold Mine':    '#16a34a',  // green
+  'Smart Suburbs':'#2563eb',  // blue
+  'Premium Zone': '#d97706',  // amber
+  'Overpriced':   '#dc2626'   // red
+}
 
 Promise.all([
-fetch("/static/nyc.geojson").then(r=>r.json()),
-fetch("/goldmine-map-data").then(r=>r.json())
-]).then(([geojson,data])=>{
+  fetch("/static/nyc.geojson").then(r=>r.json()),
+  fetch("/goldmine-map-data").then(r=>r.json())
+]).then(([geojson, data])=>{
 
-/* =======================
-   Borough Average Price
-======================= */
+  /* =======================
+     BOROUGH CHOROPLETH
+     (subtle background)
+  ======================= */
 
-let boroughPrice={}
+  let boroughPrice = {}
+  data.forEach(d=>{
+    let b = d.SUBLOCALITY_CLEAN
+    if(!boroughPrice[b]) boroughPrice[b] = []
+    boroughPrice[b].push(d.PRICE)
+  })
+  Object.keys(boroughPrice).forEach(b=>{
+    let vals = boroughPrice[b]
+    boroughPrice[b] = vals.reduce((a,c)=>a+c,0)/vals.length
+  })
 
-data.forEach(d=>{
+  function getBoroughColor(p){
+    return p>1500000?'#fca5a5':
+           p>800000 ?'#fcd34d':
+                     '#bbf7d0'
+  }
 
-let borough=d.STATE
+  L.geoJson(geojson,{
+    style(feature){
+      let price = boroughPrice[feature.properties.BoroName]||0
+      return{
+        fillColor: getBoroughColor(price),
+        weight:2, color:'#fff',
+        fillOpacity:0.35
+      }
+    },
+    onEachFeature(feature, layer){
+      let b = feature.properties.BoroName
+      let avg = boroughPrice[b]
+      layer.bindTooltip(`<b>${b}</b><br>Avg price: $${avg ? Math.round(avg).toLocaleString() : 'N/A'}`)
+    }
+  }).addTo(map)
 
-if(!boroughPrice[borough]){
-boroughPrice[borough]=[]
-}
+  /* =======================
+     CLUSTER DOTS
+  ======================= */
 
-boroughPrice[borough].push(d.pred_price)
+  data.forEach(d=>{
+    let color = clusterColors[d.CLUSTER_NAME] || '#888'
+    L.circleMarker([d.latitude, d.longitude],{
+      radius: 4,
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.75,
+      weight: 0
+    }).bindPopup(
+      `<b>${d.CLUSTER_NAME}</b><br>
+       Price: $${Number(d.PRICE).toLocaleString()}<br>
+       $/sqft: $${Math.round(d.PRICE_PER_SQFT)}<br>
+       Value Index: ${Number(d.VALUE_INDEX).toFixed(2)}<br>
+       Borough: ${d.SUBLOCALITY_CLEAN}`
+    ).addTo(map)
+  })
 
-})
+  /* =======================
+     ECONOMIC HUBS
+  ======================= */
 
-Object.keys(boroughPrice).forEach(b=>{
+  var hubNames = [
+    'Midtown Manhattan','Financial District',
+    'Downtown Brooklyn','Long Island City',
+    'Flushing','Jamaica','South Bronx','St. George'
+  ]
+  var hubCoords = [
+    [40.7580,-73.9855],[40.7081,-74.0093],
+    [40.6925,-73.9868],[40.7447,-73.9485],
+    [40.7654,-73.8282],[40.7024,-73.7966],
+    [40.8162,-73.9165],[40.6437,-74.0759]
+  ]
 
-let avg = boroughPrice[b].reduce((a,c)=>a+c,0)/boroughPrice[b].length
-boroughPrice[b]=avg
+  hubCoords.forEach((h,i)=>{
+    L.circleMarker(h,{
+      radius:9, color:'#fff', fillColor:'#fbbf24',
+      fillOpacity:1, weight:2
+    }).bindTooltip(`<b>Hub: ${hubNames[i]}</b>`,{permanent:false}).addTo(map)
+  })
 
-})
+  /* =======================
+     LEGEND
+  ======================= */
 
-
-
-/* =======================
-        COLOR SCALE
-======================= */
-
-function getColor(p){
-
-return p>2000000?'#800026':
-p>1500000?'#BD0026':
-p>1000000?'#E31A1C':
-p>700000?'#FC4E2A':
-p>500000?'#FD8D3C':
-p>300000?'#FEB24C':
-'#FED976'
-
-}
-
-
-/* =======================
-      STYLE MAP AREA
-======================= */
-
-function style(feature){
-
-let area=feature.properties.borough
-let price=boroughPrice[area]||0
-
-return{
-fillColor:getColor(price),
-weight:1,
-opacity:1,
-color:'white',
-fillOpacity:0.7
-}
-
-}
-
-
-/* =======================
-     DRAW CHOROPLETH
-======================= */
-
-L.geoJson(geojson,{
-style:style
-}).addTo(map)
-
-
-
-/* =======================
-        HEATMAP
-======================= */
-
-const heatData=data.map(d=>[
-d.latitude,
-d.longitude,
-d.pred_price/1000000
-])
-
-L.heatLayer(heatData,{
-radius:30,
-blur:25,
-maxZoom:12
-}).addTo(map)
-
-})
-
-
-/* =======================
-      ECONOMIC HUBS
-======================= */
-
-var hubs=[
-
-[40.7580,-73.9855], // Midtown
-[40.7081,-74.0093], // Financial District
-[40.6925,-73.9868], // Downtown Brooklyn
-[40.7447,-73.9485], // Long Island City
-[40.7654,-73.8282], // Flushing
-[40.7024,-73.7966], // Jamaica
-[40.8162,-73.9165], // Bronx Hub
-[40.6437,-74.0759]  // Staten Island
-
-]
-
-hubs.forEach(h=>{
-
-L.circleMarker(h,{
-radius:8,
-color:"yellow",
-fillColor:"yellow",
-fillOpacity:1
-}).addTo(map)
+  let legend = L.control({position:'bottomright'})
+  legend.onAdd = ()=>{
+    let div = L.DomUtil.create('div','legend')
+    div.innerHTML = '<b>Value Clusters</b><br>'
+    Object.entries(clusterColors).forEach(([name,color])=>{
+      div.innerHTML += `<span class="legend-dot" style="background:${color}"></span>${name}<br>`
+    })
+    div.innerHTML += '<br><span class="legend-dot" style="background:#fbbf24;border:2px solid #fff"></span>Economic Hub<br>'
+    return div
+  }
+  legend.addTo(map)
 
 })
 

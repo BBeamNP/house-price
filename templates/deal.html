@@ -2,134 +2,250 @@
 <html>
 <head>
 <title>NY Housing AI</title>
-
 <style>
 
-body{
-font-family: Arial;
-background:#f3f4f6;
-padding:40px;
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f8fafc;
+  padding: 0;
+  margin: 0;
+  color: #1e293b;
 }
 
-.container{
-width:500px;
-margin:auto;
-background:white;
-padding:30px;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
+/* NAV */
+nav {
+  background: #0f172a;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  border-bottom: 1px solid #1e293b;
+}
+nav .brand {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-right: 32px;
+  padding-right: 32px;
+  border-right: 1px solid #334155;
+  white-space: nowrap;
+}
+nav a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 16px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+nav a:hover { color: white; }
+nav a.active { color: white; border-bottom: 2px solid #3b82f6; }
+
+/* PAGE */
+.page {
+  min-height: calc(100vh - 52px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
 }
 
-h2{
-text-align:center;
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: white;
+  padding: 36px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
 }
 
-input,select{
-width:100%;
-padding:10px;
-margin-top:8px;
-margin-bottom:10px;
+h2 {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #0f172a;
 }
 
-button{
-width:100%;
-padding:12px;
-background:#0066CC;
-color:white;
-border:none;
-border-radius:6px;
-font-size:16px;
-cursor:pointer;
+.subtitle {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  margin: 0 0 28px 0;
 }
 
-button:hover{
-background:#004999;
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 20px 0;
 }
 
-.result{
-margin-top:20px;
-padding:15px;
-background:#eef2ff;
-border-radius:8px;
-font-size:18px;
-text-align:center;
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: auto;
+}
+
+input:focus, select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  background: white;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.15s;
+}
+button:hover { background: #1e40af; }
+
+.result {
+  margin-top: 18px;
+  padding: 18px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  color: #1d4ed8;
 }
 
 </style>
-
 </head>
-
 <body>
 
-<div class="container">
+<nav>
+  <span class="brand">NY Housing AI</span>
+  <a href="/" class="active">Deal Hunter</a>
+  <a href="/matchmaker">Matchmaker</a>
+  <a href="/goldmine">Gold Mine Map</a>
+</nav>
 
-<h2>🏠 AI Housing Price Prediction</h2>
+<div class="page"><div class="card">
 
-<label>Beds</label>
-<input id="beds" type="number">
+  <h2>AI Housing Price Prediction</h2>
+  <p class="subtitle">Enter property details to get an estimated market price</p>
 
-<label>Bath</label>
-<input id="bath" type="number">
+  <div class="row">
+    <div class="field">
+      <label>Beds</label>
+      <input id="beds" type="number" placeholder="e.g. 3">
+    </div>
+    <div class="field">
+      <label>Bath</label>
+      <input id="bath" type="number" placeholder="e.g. 2">
+    </div>
+  </div>
 
-<label>Square Feet</label>
-<input id="sqft" type="number">
+  <div class="field">
+    <label>Square Feet</label>
+    <input id="sqft" type="number" placeholder="e.g. 1400">
+  </div>
 
-<label>Latitude</label>
-<input id="lat" type="number" step="any">
+  <hr class="divider">
 
-<label>Longitude</label>
-<input id="lon" type="number" step="any">
+  <div class="row">
+    <div class="field">
+      <label>Latitude</label>
+      <input id="lat" type="number" step="any" placeholder="e.g. 40.7580">
+    </div>
+    <div class="field">
+      <label>Longitude</label>
+      <input id="lon" type="number" step="any" placeholder="e.g. -73.9855">
+    </div>
+  </div>
 
-<label>Property Type</label>
-<select id="type">
-<option>House for sale</option>
-<option>Condo for sale</option>
-<option>Townhouse for sale</option>
-<option>Multi-family home for sale</option>
-<option>Co-op for sale</option>
-</select>
+  <div class="field">
+    <label>Property Type</label>
+    <select id="type">
+      <option>House for sale</option>
+      <option>Condo for sale</option>
+      <option>Townhouse for sale</option>
+      <option>Multi-family home for sale</option>
+      <option>Co-op for sale</option>
+    </select>
+  </div>
 
-<label>Location</label>
-<select id="area">
-<option>Manhattan</option>
-<option>Brooklyn</option>
-<option>Queens</option>
-<option>Bronx</option>
-<option>Staten Island</option>
-</select>
+  <div class="field">
+    <label>Borough</label>
+    <select id="area">
+      <option>Manhattan</option>
+      <option>Brooklyn</option>
+      <option>Queens</option>
+      <option>Bronx</option>
+      <option>Staten Island</option>
+    </select>
+  </div>
 
-<button onclick="predictPrice()">Predict Price</button>
+  <button onclick="predictPrice()">Predict Price</button>
 
-<div class="result" id="result">
-Estimated Price will appear here
-</div>
+  <div class="result" id="result" style="display:none"></div>
 
-</div>
+</div></div>
 
 <script>
 async function predictPrice(){
+  let beds = document.getElementById("beds").value
+  let bath = document.getElementById("bath").value
+  let sqft = document.getElementById("sqft").value
+  let lat  = document.getElementById("lat").value
+  let lon  = document.getElementById("lon").value
+  let property_type = document.getElementById("type").value
+  let sublocality   = document.getElementById("area").value
 
-let beds = document.getElementById("beds").value
-let bath = document.getElementById("bath").value
-let sqft = document.getElementById("sqft").value
-let lat = document.getElementById("lat").value
-let lon = document.getElementById("lon").value
-let property_type = document.getElementById("type").value
-let sublocality = document.getElementById("area").value
+  let url = `http://127.0.0.1:8000/deal?beds=${beds}&bath=${bath}&sqft=${sqft}&lat=${lat}&lon=${lon}&property_type=${property_type}&sublocality=${sublocality}`
+  let response = await fetch(url, { method: "POST" })
+  let data = await response.json()
+  let price = data.deal_prediction
 
-let url = `http://127.0.0.1:8000/deal?beds=${beds}&bath=${bath}&sqft=${sqft}&lat=${lat}&lon=${lon}&property_type=${property_type}&sublocality=${sublocality}`
-
-let response = await fetch(url,{
-method:"POST"
-})
-
-let data = await response.json()
-
-let price = data.deal_prediction
-
-document.getElementById("result").innerHTML =
-"💰 Estimated Price: $" + Number(price).toLocaleString()
-
+  let el = document.getElementById("result")
+  el.style.display = "block"
+  el.innerHTML = "Estimated Price: $" + Number(price).toLocaleString()
 }
 </script>
 

@@ -15,10 +15,14 @@ app.include_router(goldmine.router)
 
 @app.get("/")
 def home(request: Request):
-    return templates.TemplateResponse("deal.html", {"request": request})
+    return templates.TemplateResponse(request, "deal.html")
 
 
-# หน้า Goldmine Map
+@app.get("/matchmaker")
+def matchmaker_page(request: Request):
+    return templates.TemplateResponse(request, "matchmaker.html")
+
+
 @app.get("/goldmine")
 def goldmine_map(request: Request):
-    return templates.TemplateResponse("goldmine.html", {"request": request})
+    return templates.TemplateResponse(request, "goldmine.html")
