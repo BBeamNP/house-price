@@ -1,232 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-<title>NY Housing AI — Matchmaker</title>
-<style>
+    <title>NY Housing AI — Matchmaker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif, Arial; background: #f8fafc; margin: 0; color: #1e293b; }
 
-*, *::before, *::after { box-sizing: border-box; }
+        /* NAV */
+        nav { background: #0f172a; padding: 0 32px; display: flex; align-items: center; height: 52px; border-bottom: 1px solid #1e293b; }
+        nav .brand { color: white; font-size: 15px; font-weight: 700; margin-right: 32px; padding-right: 32px; border-right: 1px solid #334155; white-space: nowrap; }
+        nav a { color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 500; padding: 0 16px; height: 52px; display: flex; align-items: center; transition: 0.15s; }
+        nav a.active { color: white; border-bottom: 2px solid #3b82f6; }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #f8fafc;
-  padding: 0;
-  margin: 0;
-  color: #1e293b;
-}
+        .page { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; gap: 20px; }
+        .card { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+        
+        h2 { text-align: center; font-size: 20px; margin: 0; }
+        .subtitle { text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px; }
+        
+        .field { display: flex; flex-direction: column; margin-bottom: 12px; }
+        label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+        
+        button { width: 100%; padding: 12px; background: #1d4ed8; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
 
-/* NAV */
-nav {
-  background: #0f172a;
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  height: 52px;
-  border-bottom: 1px solid #1e293b;
-}
-nav .brand {
-  color: white;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  margin-right: 32px;
-  padding-right: 32px;
-  border-right: 1px solid #334155;
-  white-space: nowrap;
-}
-nav a {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 0 16px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
-}
-nav a:hover { color: white; }
-nav a.active { color: white; border-bottom: 2px solid #3b82f6; }
+        #map { height: 300px; width: 100%; border-radius: 12px; margin-top: 20px; display: none; border: 1px solid #e2e8f0; }
+        
+        .result-summary { margin-top: 15px; padding: 15px; border-radius: 10px; text-align: center; display: none; font-weight: 700; background: #f1f5f9; }
 
-/* PAGE */
-.page {
-  min-height: calc(100vh - 52px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-}
-
-.card {
-  width: 100%;
-  max-width: 520px;
-  background: white;
-  padding: 36px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-}
-
-h2 {
-  text-align: center;
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #0f172a;
-}
-
-.subtitle {
-  text-align: center;
-  color: #64748b;
-  font-size: 13px;
-  margin: 0 0 28px 0;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 14px;
-}
-
-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
-}
-
-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1e293b;
-  background: white;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-  background: white;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  background: #1d4ed8;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 6px;
-  transition: background 0.15s;
-}
-button:hover { background: #1e40af; }
-
-.result {
-  margin-top: 18px;
-  padding: 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  text-align: center;
-  display: none;
-}
-
-.result-label {
-  font-size: 15px;
-  color: #475569;
-  margin-bottom: 6px;
-}
-
-.result-score {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.score-bar-wrap {
-  background: #e2e8f0;
-  border-radius: 99px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.score-bar {
-  height: 10px;
-  border-radius: 99px;
-  transition: width 0.6s ease;
-}
-
-</style>
+        /* LIST STYLE */
+        .matches-section { width: 100%; max-width: 600px; display: none; }
+        .list-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 0; }
+        
+        .match-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; background: white; border: 1px solid #e2e8f0; 
+            border-radius: 10px; margin-bottom: 8px; transition: 0.2s;
+        }
+        .match-item:hover { border-color: #3b82f6; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .info b { font-size: 16px; color: #0f172a; display: block; }
+        .info span { font-size: 12px; color: #64748b; }
+        .score-box { text-align: right; }
+        .score-val { font-size: 18px; font-weight: 800; }
+        .score-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; }
+    </style>
 </head>
 <body>
-
-<nav>
+    <nav>
   <span class="brand">NY Housing AI</span>
   <a href="/">Deal Hunter</a>
-  <a href="/matchmaker" class="active">Matchmaker</a>
+  <a href="/matchmaker"  class="active">Matchmaker</a>
   <a href="/goldmine">Gold Mine Map</a>
 </nav>
 
-<div class="page"><div class="card">
+    <div class="page">
+        <div class="card">
+            <h2>Property Matchmaker</h2>
+            <p class="subtitle">See top 5 matches based on your criteria</p>
+            
+            <div class="field"><label>Price ($)</label><input id="price" type="number" value="450000"></div>
+            <div class="field"><label>Sqft</label><input id="sqft" type="number" value="1200"></div>
+            <div class="field"><label>Beds</label><input id="beds" type="number" value="2"></div>
+            <div class="field"><label>Bath</label><input id="bath" type="number" value="1"></div>
+            <div class="field"><label>Distance (mi)</label><input id="distance" type="number" value="5"></div>
 
-  <h2>Property Matchmaker</h2>
-  <p class="subtitle">See how well a listing's price and size compare to the market</p>
+            <button onclick="getMatch()">Find Match Score</button>
 
-  <div class="field">
-    <label>Budget / Listing Price ($)</label>
-    <input id="price" type="number" placeholder="e.g. 850000">
-  </div>
+            <div class="result-summary" id="summary"></div>
+            <div id="map"></div>
+        </div>
 
-  <div class="field">
-    <label>Square Feet</label>
-    <input id="sqft" type="number" placeholder="e.g. 1200">
-  </div>
-
-  <button onclick="getMatch()">Find Match Score</button>
-
-  <div class="result" id="result">
-    <div class="result-label" id="result-label"></div>
-    <div class="result-score" id="result-score"></div>
-    <div class="score-bar-wrap">
-      <div class="score-bar" id="score-bar" style="width:0%"></div>
+        <div class="matches-section" id="matches-section">
+            <div class="list-title">Top 5 Matching Properties</div>
+            <div id="matches-list"></div>
+        </div>
     </div>
-  </div>
 
-</div></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
 
-<script>
-async function getMatch(){
-  let price = document.getElementById("price").value
-  let sqft  = document.getElementById("sqft").value
+        async function getMatch() {
+            const inputs = {
+                price: document.getElementById("price").value,
+                sqft: document.getElementById("sqft").value,
+                beds: document.getElementById("beds").value,
+                bath: document.getElementById("bath").value,
+                distance: document.getElementById("distance").value
+            };
 
-  if(!price || !sqft){
-    alert("Please enter both price and square feet.")
-    return
-  }
+            try {
+                // *** สำคัญ: ตรวจสอบว่า Path ตรงกับใน Python ของคุณหรือไม่ (เช่น /predict หรือ /api/matchmaker) ***
+                const res = await fetch(`/api/matchmaker?price=${inputs.price}&sqft=${inputs.sqft}&beds=${inputs.beds}&bath=${inputs.bath}&distance=${inputs.distance}`, { method: "POST" });
+                
+                if (!res.ok) throw new Error("Server connection failed");
+                const data = await res.json();
 
-  let response = await fetch(`/roi?price=${price}&sqft=${sqft}`, { method: "POST" })
-  let data = await response.json()
-  let score = data.roi_prediction[0]
+                // 1. แสดงผลคะแนนรวม
+                const summary = document.getElementById("summary");
+                summary.style.display = "block";
+                summary.style.color = data.match_score >= 70 ? "#16a34a" : "#d97706";
+                summary.innerText = `Result: ${data.match_score >= 70 ? 'Good' : 'Average'} Match (${data.match_score}%)`;
 
-  let color = score >= 70 ? "#16a34a" : score >= 40 ? "#d97706" : "#dc2626"
-  let label = score >= 70 ? "Great Match" : score >= 40 ? "Fair Match" : "Poor Match"
+                // 2. แสดงแผนที่
+                document.getElementById("map").style.display = "block";
+                if (map) map.remove();
+                const first = data.top_matches[0];
+                map = L.map('map').setView([first.LATITUDE, first.LONGITUDE], 11);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-  let el = document.getElementById("result")
-  el.style.display = "block"
-  document.getElementById("result-label").innerText = label
-  document.getElementById("result-score").innerHTML = `<span style="color:${color}">${score.toFixed(1)}%</span>`
-  document.getElementById("score-bar").style.width   = score + "%"
-  document.getElementById("score-bar").style.background = color
-}
-</script>
+                // 3. สร้าง List 5 อันดับ
+                let listHtml = "";
+                data.top_matches.forEach((m, i) => {
+                    // ปักหมุด
+                    L.marker([m.LATITUDE, m.LONGITUDE]).addTo(map)
+                     .bindPopup(`Match #${i+1}: $${m.PRICE.toLocaleString()}`);
 
+                    // สร้าง HTML สำหรับลิสต์
+                    const sColor = m.MATCH_SCORE >= 80 ? "#16a34a" : m.MATCH_SCORE >= 60 ? "#d97706" : "#dc2626";
+                    listHtml += `
+                        <div class="match-item">
+                            <div class="info">
+                                <b>$${m.PRICE.toLocaleString()}</b>
+                                <span>${m.BEDS} Bed | ${m.BATH} Bath | ${m.PROPERTYSQFT.toLocaleString()} sqft</span>
+                                <span style="display:block; font-size:10px; color:#94a3b8;">📍 ${m.SUBLOCALITY_CLEAN}</span>
+                            </div>
+                            <div class="score-box">
+                                <div class="score-label">Match Score</div>
+                                <div class="score-val" style="color:${sColor}">${m.MATCH_SCORE.toFixed(1)}%</div>
+                            </div>
+                        </div>`;
+                });
+
+                document.getElementById("matches-list").innerHTML = listHtml;
+                document.getElementById("matches-section").style.display = "block";
+
+            } catch (err) {
+                alert("Error: " + err.message + "\nMake sure your Python backend is running!");
+            }
+        }
+    </script>
 </body>
 </html>
